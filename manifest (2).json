@@ -1,0 +1,18 @@
+{
+  "name": "INKA Engine — Manual Técnico",
+  "short_name": "INKA Docs",
+  "description": "Manual técnico exhaustivo del motor INKA: núcleo, drivers, plugins y herramientas",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0c1014",
+  "theme_color": "#7bd0c4",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "icons": [
+    { "src": "icon-16.png",  "sizes": "16x16",   "type": "image/png" },
+    { "src": "icon-32.png",  "sizes": "32x32",   "type": "image/png" },
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

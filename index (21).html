@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#7bd0c4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="INKA Docs">
+<meta name="description" content="Manual técnico exhaustivo del motor INKA de aventura gráfica point-and-click.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icon-16.png">
+<title>INKA Engine — Manual Técnico</title>
+<style>
+:root {
+  --bg: #0c1014;
+  --surface: #111720;
+  --surface2: #161e2a;
+  --border: #1e2a38;
+  --border2: #253040;
+  --text: #dfe7f2;
+  --dim: #7a8fa8;
+  --faint: #4a5868;
+  --acc: #7bd0c4;
+  --acc2: #f0a23b;
+  --green: #46c08a;
+  --red: #e2585b;
+  --blue: #6faee8;
+  --mono: 'SFMono-Regular', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius: 10px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.6;
+  min-height: 100dvh;
+}
+/* ── HEADER ── */
+#header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(12,16,20,.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--safe-top) + 10px) 16px 10px;
+  display: flex; align-items: center; gap: 10px;
+}
+.logo { font-weight: 800; font-size: 15px; letter-spacing: .04em; color: var(--acc); }
+.logo span { color: var(--dim); font-weight: 400; }
+#menuBtn {
+  margin-left: auto;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: 6px 12px; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: border-color .15s;
+}
+#menuBtn:hover { border-color: var(--acc); }
+/* ── TOC DRAWER ── */
+#toc {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+  width: min(320px, 88vw);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+  padding-top: calc(var(--safe-top) + 8px);
+  padding-bottom: calc(var(--safe-bot) + 20px);
+}
+#toc.open { transform: translateX(0); }
+#tocClose {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+.toc-title { font-weight: 700; font-size: 13px; color: var(--acc); letter-spacing: .06em; }
+#closeToc {
+  background: none; border: none; color: var(--dim);
+  font-size: 20px; cursor: pointer; padding: 2px 6px; border-radius: 4px;
+}
+#closeToc:hover { color: var(--text); }
+.toc-section { padding: 6px 0; }
+.toc-group {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--faint); padding: 10px 16px 4px;
+}
+.toc-link {
+  display: block; padding: 7px 16px 7px 24px;
+  font-size: 13px; color: var(--dim); text-decoration: none;
+  border-left: 2px solid transparent; transition: all .12s;
+}
+.toc-link:hover, .toc-link.active { color: var(--acc); border-left-color: var(--acc); background: rgba(123,208,196,.06); }
+.toc-sub { padding-left: 36px; font-size: 12px; color: var(--faint); }
+.toc-sub:hover, .toc-sub.active { color: var(--acc); border-left-color: var(--acc); background: rgba(123,208,196,.04); }
+#overlay {
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+#overlay.on { opacity: 1; pointer-events: all; }
+/* ── MAIN ── */
+main {
+  padding-top: calc(var(--safe-top) + 58px);
+  padding-bottom: calc(var(--safe-bot) + 40px);
+  max-width: 820px; margin: 0 auto; padding-left: 16px; padding-right: 16px;
+}
+/* ── HERO ── */
+.hero {
+  padding: 32px 0 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(123,208,196,.1); border: 1px solid rgba(123,208,196,.25);
+  color: var(--acc); font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 20px; margin-bottom: 14px;
+}
+.hero h1 { font-size: clamp(22px, 5vw, 32px); font-weight: 800; line-height: 1.2; margin-bottom: 10px; }
+.hero h1 em { color: var(--acc); font-style: normal; }
+.hero-lead { font-size: 15px; color: var(--dim); max-width: 600px; line-height: 1.65; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.meta-chip {
+  font-size: 11px; padding: 3px 10px; border-radius: 20px;
+  border: 1px solid var(--border2); color: var(--dim); background: var(--surface2);
+  font-family: var(--mono);
+}
+.meta-chip.ok { border-color: rgba(70,192,138,.35); color: var(--green); background: rgba(70,192,138,.08); }
+.meta-chip.warn { border-color: rgba(240,162,59,.35); color: var(--acc2); background: rgba(240,162,59,.08); }
+/* ── SECTIONS ── */
+section { margin-bottom: 48px; scroll-margin-top: 72px; }
+.section-header {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 20px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.section-icon {
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  background: var(--surface2); border: 1px solid var(--border2);
+}
+.section-header h2 { font-size: 19px; font-weight: 700; line-height: 1.2; }
+.section-header p { font-size: 13px; color: var(--dim); margin-top: 3px; }
+/* ── SUBSECTION ── */
+h3 {
+  font-size: 15px; font-weight: 700; margin: 28px 0 10px;
+  color: var(--text); display: flex; align-items: center; gap: 8px;
+  scroll-margin-top: 72px;
+}
+h3::before { content: ''; display: block; width: 3px; height: 16px; background: var(--acc); border-radius: 2px; }
+h4 { font-size: 13px; font-weight: 700; color: var(--dim); margin: 18px 0 8px; text-transform: uppercase; letter-spacing: .07em; }
+p { font-size: 14px; color: var(--dim); margin-bottom: 10px; line-height: 1.7; }
+/* ── CARDS ── */
+.card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px;
+}
+.card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.card p { margin-bottom: 0; font-size: 13px; }
+/* ── STATUS BADGE ── */
+.badge {
+  display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 20px; letter-spacing: .06em; text-transform: uppercase;
+  font-family: var(--mono); flex-shrink: 0;
+}
+.badge.stable { background: rgba(70,192,138,.15); color: var(--green); border: 1px solid rgba(70,192,138,.3); }
+.badge.warn   { background: rgba(240,162,59,.15);  color: var(--acc2);  border: 1px solid rgba(240,162,59,.3); }
+.badge.error  { background: rgba(226,88,91,.15);   color: var(--red);   border: 1px solid rgba(226,88,91,.3); }
+.badge.info   { background: rgba(111,174,232,.15); color: var(--blue);  border: 1px solid rgba(111,174,232,.3); }
+/* ── API TABLE ── */
+.api-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0 18px; }
+.api-table th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.api-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.api-table tr:last-child td { border-bottom: none; }
+.api-table tr:hover td { background: rgba(255,255,255,.02); }
+.api-table td:first-child { font-family: var(--mono); font-size: 12px; color: var(--acc); white-space: nowrap; }
+.api-table td:nth-child(2) { color: var(--dim); }
+/* ── CODE ── */
+code {
+  font-family: var(--mono); font-size: 12px; color: var(--acc);
+  background: rgba(123,208,196,.08); padding: 2px 6px; border-radius: 4px;
+}
+pre {
+  background: #080c10; border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; overflow-x: auto; margin: 12px 0;
+  font-family: var(--mono); font-size: 12px; line-height: 1.6; color: #cde;
+}
+pre .c { color: var(--faint); }
+pre .k { color: var(--blue); }
+pre .s { color: var(--green); }
+pre .n { color: var(--acc2); }
+/* ── FEATURE LIST ── */
+.feat-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 10px 0 16px; }
+.feat-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; color: var(--dim); padding: 8px 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; line-height: 1.5;
+}
+.feat-list li::before { content: '→'; color: var(--acc); flex-shrink: 0; margin-top: 1px; font-weight: 700; font-size: 11px; }
+/* ── ISSUE BOX ── */
+.issue {
+  border-radius: var(--radius); padding: 12px 14px; margin: 14px 0;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.issue.warn { background: rgba(240,162,59,.08); border: 1px solid rgba(240,162,59,.25); }
+.issue.error { background: rgba(226,88,91,.08); border: 1px solid rgba(226,88,91,.25); }
+.issue.ok { background: rgba(70,192,138,.08); border: 1px solid rgba(70,192,138,.25); }
+.issue.info { background: rgba(111,174,232,.08); border: 1px solid rgba(111,174,232,.25); }
+.issue-icon { font-size: 16px; flex-shrink: 0; }
+.issue-body { font-size: 13px; line-height: 1.6; }
+.issue-body strong { display: block; font-weight: 700; margin-bottom: 3px; }
+.issue.warn .issue-body strong { color: var(--acc2); }
+.issue.error .issue-body strong { color: var(--red); }
+.issue.ok .issue-body strong { color: var(--green); }
+.issue.info .issue-body strong { color: var(--blue); }
+.issue-body span { color: var(--dim); }
+/* ── GRID 2 ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+@media (max-width: 500px) { .grid2 { grid-template-columns: 1fr; } }
+/* ── DRIVER COMPARE ── */
+.driver-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+@media (max-width: 560px) { .driver-grid { grid-template-columns: 1fr; } }
+.driver-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.driver-card h4 { margin: 0 0 8px; font-size: 13px; color: var(--text); text-transform: none; letter-spacing: 0; }
+/* ── VERSION TIMELINE ── */
+.timeline { position: relative; padding-left: 20px; margin: 14px 0; }
+.timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.tl-item { position: relative; margin-bottom: 16px; }
+.tl-dot { position: absolute; left: -17px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--acc); border: 2px solid var(--bg); }
+.tl-item h5 { font-size: 12px; font-weight: 700; color: var(--acc); font-family: var(--mono); margin-bottom: 4px; }
+.tl-item p { font-size: 13px; color: var(--dim); margin: 0; }
+/* ── PILL ROW ── */
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.pill {
+  font-size: 11px; font-family: var(--mono); padding: 3px 9px; border-radius: 20px;
+  border: 1px solid var(--border2); color: var(--dim); background: var(--surface2);
+}
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+/* ── SEARCH ── */
+#searchWrap { padding: 10px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 10; }
+#search {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px;
+  font-family: var(--sans); outline: none; transition: border-color .15s;
+}
+#search:focus { border-color: var(--acc); }
+#search::placeholder { color: var(--faint); }
+/* ── TOP ANCHOR ── */
+.back-top {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--faint); font-size: 12px; text-decoration: none;
+  margin-top: 32px; padding: 6px 12px; border: 1px solid var(--border);
+  border-radius: 8px; transition: color .15s, border-color .15s;
+}
+.back-top:hover { color: var(--acc); border-color: var(--acc); }
+/* ── DIVIDER ── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+/* ── INLINE TAGS ── */
+.tag { display: inline-block; font-size: 10px; font-family: var(--mono); padding: 1px 6px; border-radius: 4px; background: rgba(123,208,196,.1); color: var(--acc); margin: 0 2px; }
+</style>
+</head>
+<body>
+<div id="overlay"></div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="logo">INKA <span>· Docs</span></div>
+  <button id="menuBtn">☰ Índice</button>
+</div>
+
+<!-- TOC DRAWER -->
+<nav id="toc" aria-label="Tabla de contenidos">
+  <div id="tocClose">
+    <span class="toc-title">📋 ÍNDICE</span>
+    <button id="closeToc">✕</button>
+  </div>
+  <div id="searchWrap">
+    <input id="search" type="search" placeholder="Buscar en el índice…" autocomplete="off">
+  </div>
+  <div class="toc-section">
+    <div class="toc-group">Visión General</div>
+    <a class="toc-link" href="#overview">¿Qué es INKA?</a>
+    <a class="toc-link" href="#arquitectura">Arquitectura del sistema</a>
+    <a class="toc-link" href="#versiones">Historial de versiones</a>
+
+    <div class="toc-group">Núcleo del Motor</div>
+    <a class="toc-link" href="#nucleo">INKA-nucleo v2.7</a>
+    <a class="toc-link toc-sub" href="#nucleo-render">Render Driver</a>
+    <a class="toc-link toc-sub" href="#nucleo-log">Sistema de Log</a>
+    <a class="toc-link toc-sub" href="#nucleo-util">Utilidades (Util)</a>
+    <a class="toc-link toc-sub" href="#nucleo-nav">Pathfinding (Nav)</a>
+    <a class="toc-link toc-sub" href="#nucleo-depth">Walk-Behind (Depth)</a>
+    <a class="toc-link toc-sub" href="#nucleo-reloj">Reloj de juego</a>
+    <a class="toc-link toc-sub" href="#nucleo-actores">NPCs (Actores)</a>
+    <a class="toc-link toc-sub" href="#nucleo-camara">Cámara (Camara)</a>
+    <a class="toc-link toc-sub" href="#nucleo-input">Input unificado</a>
+    <a class="toc-link toc-sub" href="#nucleo-animation">Animación</a>
+    <a class="toc-link toc-sub" href="#nucleo-inventory">Inventario</a>
+    <a class="toc-link toc-sub" href="#nucleo-idioma">Localización (Idioma)</a>
+    <a class="toc-link toc-sub" href="#nucleo-dialogue">Diálogos</a>
+    <a class="toc-link toc-sub" href="#nucleo-scene">Escenas (Scene)</a>
+    <a class="toc-link toc-sub" href="#nucleo-saveload">Guardado (SaveLoad)</a>
+    <a class="toc-link toc-sub" href="#nucleo-plugins">Sistema de Plugins</a>
+    <a class="toc-link toc-sub" href="#nucleo-game">Orquestador (Game)</a>
+
+    <div class="toc-group">Drivers de Render</div>
+    <a class="toc-link" href="#driver-animate">Driver Animate (CreateJS)</a>
+    <a class="toc-link toc-sub" href="#driver-animate-ciclo">Ciclo de vida</a>
+    <a class="toc-link toc-sub" href="#driver-animate-nodos">Nodos</a>
+    <a class="toc-link toc-sub" href="#driver-animate-anim">Animación</a>
+    <a class="toc-link toc-sub" href="#driver-animate-ui">UI Primitivas</a>
+    <a class="toc-link" href="#driver-spine">Driver Spine (PixiJS)</a>
+    <a class="toc-link toc-sub" href="#driver-spine-ciclo">Ciclo de vida</a>
+    <a class="toc-link toc-sub" href="#driver-spine-assets">Carga de assets</a>
+    <a class="toc-link toc-sub" href="#driver-spine-eventos">Sistema de eventos</a>
+    <a class="toc-link toc-sub" href="#driver-spine-anim">Animación Spine</a>
+    <a class="toc-link toc-sub" href="#driver-spine-tween">Tween propio</a>
+    <a class="toc-link toc-sub" href="#driver-spine-howler">Sonido (Howler)</a>
+    <a class="toc-link" href="#driver-contratos">Contrato IRenderDriver</a>
+
+    <div class="toc-group">Plugins</div>
+    <a class="toc-link" href="#plugin-telemetria">Plugin Telemetría v3.1</a>
+    <a class="toc-link toc-sub" href="#telem-modos">Modos de operación</a>
+    <a class="toc-link toc-sub" href="#telem-xapi">Capa xAPI</a>
+    <a class="toc-link toc-sub" href="#telem-standalone">Modo standalone</a>
+    <a class="toc-link toc-sub" href="#telem-api">API pública</a>
+    <a class="toc-link toc-sub" href="#telem-issues">Issues conocidos</a>
+    <a class="toc-link" href="#plugin-ia">Plugin IA v2.1</a>
+    <a class="toc-link toc-sub" href="#ia-backend">Backend externo</a>
+    <a class="toc-link toc-sub" href="#ia-contexto">Contexto enriquecido</a>
+    <a class="toc-link toc-sub" href="#ia-acciones">Acciones GAME_DATA</a>
+    <a class="toc-link toc-sub" href="#ia-api">API pública</a>
+    <a class="toc-link toc-sub" href="#ia-issues">Issues conocidos</a>
+
+    <div class="toc-group">Herramientas</div>
+    <a class="toc-link" href="#editor-dialogos">Editor de Diálogos</a>
+    <a class="toc-link toc-sub" href="#editor-v2">Versión v2</a>
+    <a class="toc-link toc-sub" href="#editor-v3">Versión v3</a>
+
+    <div class="toc-group">Integración</div>
+    <a class="toc-link" href="#integracion-animate">Con Adobe Animate</a>
+    <a class="toc-link" href="#integracion-spine">Con PixiJS + Spine</a>
+    <a class="toc-link" href="#integracion-articulate">Con Articulate Storyline</a>
+    <a class="toc-link" href="#game-data">Referencia GAME_DATA</a>
+
+    <div class="toc-group">Estado Operacional</div>
+    <a class="toc-link" href="#estado">Resumen de estado</a>
+    <a class="toc-link" href="#issues">Issues pendientes</a>
+    <a class="toc-link" href="#orden-carga">Orden de carga</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="top">
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="hero">
+  <div class="hero-badge">📖 Manual Técnico</div>
+  <h1>Motor <em>INKA</em><br>Documentación completa</h1>
+  <p class="hero-lead">
+    Motor de aventura gráfica point-and-click render-agnóstico. Soporta Adobe Animate (CreateJS)
+    y PixiJS + Spine como backends de renderizado intercambiables, con sistema de plugins
+    para telemetría educativa e inteligencia artificial.
+  </p>
+  <div class="meta-row">
+    <span class="meta-chip ok">Núcleo v2.7</span>
+    <span class="meta-chip ok">Driver Animate v1</span>
+    <span class="meta-chip ok">Driver Spine v2</span>
+    <span class="meta-chip ok">Telemetría v3.1</span>
+    <span class="meta-chip ok">IA v2.1</span>
+    <span class="meta-chip warn">2 issues residuales</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ OVERVIEW ═══════════════════ -->
+<section id="overview">
+  <div class="section-header">
+    <div class="section-icon">🎮</div>
+    <div>
+      <h2>¿Qué es INKA?</h2>
+      <p>Motor JavaScript para aventuras gráficas educativas, render-agnóstico</p>
+    </div>
+  </div>
+
+  <p>INKA es un motor de aventura gráfica point-and-click escrito en JavaScript puro. Es el <strong>cerebro</strong> del juego: no dibuja nada directamente. Dirige la lógica, los estados, los diálogos, el inventario y la navegación hablando siempre a través de una interfaz <code>IRenderDriver</code> intercambiable.</p>
+
+  <p>Está diseñado específicamente para proyectos educativos: incluye telemetría xAPI compatible con Articulate Storyline/LMS y un plugin de IA pedagógica con feedback adaptativo.</p>
+
+  <h3>Principios de diseño</h3>
+  <ul class="feat-list">
+    <li><strong>Render-agnóstico:</strong> el motor nunca llama a <code>createjs.*</code> ni <code>PIXI.*</code> directamente. Todo pasa por <code>INKA.Render</code>.</li>
+    <li><strong>Dirigido por datos:</strong> el comportamiento completo del juego se describe en un objeto <code>GAME_DATA</code>. No hay código por escena.</li>
+    <li><strong>Canal de errores único:</strong> <code>INKA.Log</code> centraliza todos los avisos, con overlay opcional en pantalla.</li>
+    <li><strong>Plugins como ciudadanos de primera clase:</strong> telemetría e IA son plugins que el motor inicializa, itera en cada tick y destruye ordenadamente.</li>
+    <li><strong>Animaciones que esperan:</strong> las cutscenes no dependen de adivinar milisegundos; la acción <code>animar</code> puede esperar a que el clip termine.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════ ARQUITECTURA ═══════════════════ -->
+<section id="arquitectura">
+  <div class="section-header">
+    <div class="section-icon">🏗️</div>
+    <div>
+      <h2>Arquitectura del sistema</h2>
+      <p>Capas, responsabilidades y flujo de datos</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📦 Capa 1 — Drivers de render (opcional antes del núcleo)</div>
+    <p><code>INKA-driver-animate.js</code> o <code>INKA-driver-spine.js</code> — implementan <code>IRenderDriver</code>. Se cargan antes que el núcleo.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">⚙️ Capa 2 — Núcleo (<code>INKA-nucleo.js</code>)</div>
+    <p>Motor completo: escenas, diálogos, inventario, NPCs, cámara, pathfinding, localización, guardado. Expone la variable global <code>INKA</code>.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">🔌 Capa 3 — Plugins</div>
+    <p><code>inka-plugin-telemetria.js</code> y <code>inka-plugin-ia.js</code>. Se registran automáticamente al cargarse si <code>INKA</code> ya existe.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">🛠️ Capa 4 — Herramientas de autor</div>
+    <p><code>inka-dialogos.html</code> — Editor visual de conversaciones. Herramienta standalone, no entra en producción.</p>
+  </div>
+
+  <h3>Flujo de un clic del jugador</h3>
+  <pre><code>Clic en pantalla
+  └─ Input.capturar() — ¿hay pila de bloqueo? (diálogo, cutscene, visor)
+       └─ NO → Character.caminarA(x, y)
+            └─ Nav.calcularRuta() — pathfinding si hay polígono
+                 └─ Render.mover(mc, destino, ms, easing, cb)
+                      └─ [Driver Animate] createjs.Tween.to(...)
+                         [Driver Spine]   ticker propio sobre PIXI.app.ticker</code></pre>
+
+  <h3>Ciclo de vida de una escena</h3>
+  <pre><code>Scene.ir(id)
+  ├─ Mundo.asegurar(id, cfg)       // crea nodo si es dinámico
+  ├─ Shooter/Danger.forzarFin()
+  ├─ Dialogue.cerrar()             // drena cola, libera pila Input
+  ├─ Depth.soltarPersonaje()       // z-order de escena anterior
+  ├─ actualMC.visible = false
+  ├─ Nav.preparar(cfg.walkable)    // grafo de esta escena
+  ├─ Regiones.preparar(cfg)
+  ├─ Actores.limpiar() + crear()   // NPCs de la escena nueva
+  ├─ Depth.preparar(cfg)           // walk-behind de esta escena
+  ├─ Character.colocar(m.x, m.y)
+  ├─ Camara.preparar(cfg)
+  ├─ Sound.musica(cfg.musica)
+  ├─ Plugins.alEntrarEscena(cfg)   // hooks de plugins
+  └─ Game.events.emit('escena:cambiada', {id})</code></pre>
+</section>
+
+<!-- ═══════════════════ VERSIONES ═══════════════════ -->
+<section id="versiones">
+  <div class="section-header">
+    <div class="section-icon">📅</div>
+    <div>
+      <h2>Historial de versiones</h2>
+      <p>Evolución del motor desde la primera versión consolidada</p>
+    </div>
+  </div>
+  <div class="timeline">
+    <div class="tl-item"><div class="tl-dot"></div><h5>v2.7 — actual</h5><p>Driver de render intercambiable (Animate / Spine). El motor deja de depender de CreateJS directamente.</p></div>
+    <div class="tl-item"><div class="tl-dot"></div><h5>v2.6</h5><p>NPCs reactivos con reglas declarativas (cerca/lejos, flags, horario). Localización en runtime con paquetes por idioma e interpolación de variables.</p></div>
+    <div class="tl-item"><div class="tl-dot"></div><h5>v2.5 — SaveLoad v3</h5><p>Guardado robusto: captura estado real completo (posición NPC, patrulla, reloj, cámara). Multi-slot. Bloqueo durante diálogo/cutscene.</p></div>
+    <div class="tl-item"><div class="tl-dot"></div><h5>v2.4 — Mundo vivo</h5><p>Cámara con scroll/zoom/shake. NPCs como actores. Reloj de juego con agenda. Cutscenes paralelas.</p></div>
+    <div class="tl-item"><div class="tl-dot"></div><h5>v2.3 — Movimiento y profundidad</h5><p>Pathfinding (grafo de visibilidad + Dijkstra). Walk-behind / z-order real.</p></div>
+    <div class="tl-item"><div class="tl-dot"></div><h5>v2.2 — Diálogos profesionales</h5><p>Máquina de escribir, hablante, retrato, voz. Árbol de conversaciones. Opciones con condiciones. Panel propio o dinámico.</p></div>
+    <div class="tl-item"><div class="tl-dot"></div><h5>v2.1 — Controles unificados</h5><p>Touch real. Teclado. Revelar interactuables. Acción secundaria. Drag &amp; drop de inventario.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ NÚCLEO ═══════════════════ -->
+<section id="nucleo">
+  <div class="section-header">
+    <div class="section-icon">⚙️</div>
+    <div>
+      <h2>INKA-nucleo v2.7</h2>
+      <p>Motor completo · ~3 500 líneas · <code>INKA-nucleo__2_.js</code></p>
+    </div>
+  </div>
+  <div class="meta-row">
+    <span class="meta-chip ok">Estable</span>
+    <span class="meta-chip">178 KB</span>
+    <span class="meta-chip">Render-agnóstico</span>
+  </div>
+
+  <h3 id="nucleo-render">Render Driver (Render)</h3>
+  <p>Punto único de indirección hacia la librería gráfica. <code>Game.init()</code> lo asigna según <code>{ driver: "animate" | "spine" }</code>. Todo el resto del motor llama a <code>Render.&lt;método&gt;</code> y nunca a <code>createjs.*</code> ni a <code>lib.*</code>.</p>
+  <pre><code><span class="c">// Selección del driver en init:</span>
+<span class="k">if</span> (opts.driver === <span class="s">"spine"</span>)   Render = <span class="k">new</span> global.INKA_DriverSpine();
+<span class="k">else</span>                           Render = <span class="k">new</span> global.INKA_DriverAnimate();
+Render.init(root, opts);</code></pre>
+
+  <h3 id="nucleo-log">Sistema de Log</h3>
+  <p>Todos los errores y avisos pasan por <code>INKA.Log</code>. En modo debug aparecen en consola; con <code>debugOverlay: true</code> también en un overlay sobre el canvas.</p>
+  <table class="api-table">
+    <tr><th>Método</th><th>Descripción</th></tr>
+    <tr><td>INKA.Log.info(...)</td><td>Solo se emite si <code>debug: true</code> en GAME_DATA</td></tr>
+    <tr><td>INKA.Log.warn(...)</td><td>Siempre a consola (problema real pero no fatal)</td></tr>
+    <tr><td>INKA.Log.error(...)</td><td>Siempre a consola; queda en historial</td></tr>
+  </table>
+  <p>Config en GAME_DATA: <code>debug: true</code>, <code>debugOverlay: true</code>. El overlay muestra los últimos 14 mensajes sobre el canvas.</p>
+
+  <h3 id="nucleo-util">Utilidades (Util)</h3>
+  <ul class="feat-list">
+    <li><code>Util.clamp(v, min, max)</code> — recorta valor al rango</li>
+    <li><code>Util.porId(arr, id)</code> — busca objeto por campo <code>id</code> en array</li>
+    <li><code>Util.finDeSegmento(mc, label)</code> — devuelve <code>{start, end}</code> en frames del segmento de un MovieClip de Animate que comienza en <code>label</code></li>
+    <li><code>Util.puntoEnPoligono(px, py, poly)</code> — ray-casting para walkbox</li>
+    <li><code>Util.clampPoligono(px, py, poly)</code> — proyecta punto al borde del polígono caminable</li>
+    <li><code>Util.clonar(v)</code> — deep-copy via JSON (con fallback a referencia si falla)</li>
+    <li><code>Util.texto(clave, params)</code> — alias de <code>INKA.texto()</code> para localización</li>
+  </ul>
+
+  <h3 id="nucleo-nav">Pathfinding (Nav)</h3>
+  <p>Se activa automáticamente cuando la escena tiene <code>walkable.poligono</code> o <code>walkable.obstaculos</code>. Si el suelo es convexo y sin obstáculos, el personaje camina en línea recta (sin overhead).</p>
+  <ul class="feat-list">
+    <li>Grafo de visibilidad sobre el polígono caminable y sus obstáculos</li>
+    <li>Algoritmo de búsqueda: Dijkstra (sin heurística, óptimo para espacios acotados)</li>
+    <li>Los puntos de clic fuera del walkable se proyectan al borde más cercano antes de calcular la ruta</li>
+    <li>Config por escena: <code>walkable: { poligono: [{x,y},...], obstaculos: [[{x,y},...]] }</code></li>
+  </ul>
+
+  <h3 id="nucleo-depth">Walk-Behind / Z-Order (Depth)</h3>
+  <p>Permite que el personaje y los NPCs pasen detrás de objetos de decorado (columnas, muebles, puertas).</p>
+  <ul class="feat-list">
+    <li>Se activa por escena con <code>profundidad: { objetos: ["columna", "mostrador"] }</code></li>
+    <li>Ordena personaje y actores por su coordenada Y en cada tick</li>
+    <li>Requiere que la escena esté posicionada en (0,0) — el driver mueve el nodo de escena, no los hijos</li>
+    <li>Sin esta config, el personaje siempre va sobre la escena (comportamiento clásico)</li>
+  </ul>
+
+  <h3 id="nucleo-reloj">Reloj de juego (Reloj)</h3>
+  <p>Reloj de tiempo de juego (no real) que dispara acciones al cruzar horas configuradas.</p>
+  <pre><code><span class="c">// Config en GAME_DATA:</span>
+reloj: {
+  horaInicial: <span class="s">"08:00"</span>,
+  velocidad: <span class="n">60</span>,    <span class="c">// 1 min real = 60 min juego</span>
+  agenda: [
+    { hora: <span class="s">"20:00"</span>, acciones: [{ tipo: <span class="s">"sonido"</span>, id: <span class="s">"noche"</span> }] }
+  ]
+}</code></pre>
+
+  <h3 id="nucleo-actores">NPCs (Actores)</h3>
+  <p>Los NPCs reusan todo el motor de movimiento (pathfinding, dirección, profundidad). Pueden hablar, patrullar por waypoints y obedecer cutscenes.</p>
+  <pre><code><span class="c">// Config por escena en GAME_DATA.escenas[i].actores:</span>
+actores: [{
+  id: <span class="s">"posadero"</span>, instancia: <span class="s">"npcPosadero"</span>, nombre: <span class="s">"Don Pedro"</span>,
+  animaciones: { idle: <span class="s">"idle"</span>, caminar: <span class="s">"walk"</span> },
+  inicio: { x: <span class="n">400</span>, y: <span class="n">300</span> },
+  ruta: [{ x: <span class="n">200</span>, y: <span class="n">300</span> }, { x: <span class="n">400</span>, y: <span class="n">300</span> }],
+  rutaLoop: <span class="k">true</span>
+}]</code></pre>
+  <h4>Reglas reactivas (v2.6)</h4>
+  <ul class="feat-list">
+    <li>Condiciones: <code>cerca</code>, <code>lejos</code>, <code>siFlag</code>, <code>siNoFlag</code>, <code>siObjeto</code>, <code>ventanaHoraria</code>, <code>fn</code></li>
+    <li>Efectos: <code>huir</code>, <code>patrullar</code>, <code>caminarA</code>, <code>decir</code>, <code>animar</code>, <code>mirar</code>, o cualquier acción</li>
+    <li>Edge-trigger por defecto; configurables como <code>repetir</code> o <code>unaVez</code></li>
+  </ul>
+
+  <h3 id="nucleo-camara">Cámara (Camara)</h3>
+  <p>Permite escenas más grandes que la pantalla. El HUD permanece fijo.</p>
+  <table class="api-table">
+    <tr><th>Acción</th><th>Efecto</th></tr>
+    <tr><td>{ tipo:"camara", seguir: true }</td><td>Sigue al personaje con smooth</td></tr>
+    <tr><td>{ tipo:"camara", irA: {x,y} }</td><td>Desplaza cámara a coordenadas</td></tr>
+    <tr><td>{ tipo:"camara", zoom: 1.5 }</td><td>Aplica zoom</td></tr>
+    <tr><td>{ tipo:"camara", temblar: 300 }</td><td>Shake durante N ms</td></tr>
+  </table>
+  <p>Config por escena: <code>camara: { ancho, alto, seguir, suavizado, zoom }</code>. El walkable debe cubrir todo el mundo, no solo la pantalla.</p>
+
+  <h3 id="nucleo-input">Input unificado (Input)</h3>
+  <p>Gestiona mouse, touch y teclado con una pila de bloqueo. Si hay diálogo, visor, teclado o cutscene encima, los clics del mundo se ignoran.</p>
+  <ul class="feat-list">
+    <li>Touch real: <code>createjs.Touch.enable()</code> + bloqueo de scroll/zoom del navegador</li>
+    <li>Arrastre e ignorar toques sobre hotspots que dispara el clic de caminar</li>
+    <li>Teclado: ESC (cerrar/avanzar), Espacio/Enter (avanzar diálogo), 1..9 (elegir opción)</li>
+    <li>Revelar interactuables: tecla configurable en PC / <code>INKA.Input.alternarRevelar()</code> desde botón HUD en móvil</li>
+    <li>Acción secundaria "examinar": clic derecho en PC, pulsación larga en móvil</li>
+    <li>Drag &amp; drop de inventario con <code>input.arrastrar: true</code>; fantasma en <code>hud.cursorObjeto</code></li>
+  </ul>
+
+  <h3 id="nucleo-animation">Animación (Animation)</h3>
+  <p>Gestiona todos los estados visuales del personaje y los actores. Llama siempre a <code>Render.aplicarAnimacion()</code> o <code>Render.reproducirAnimacion()</code>, nunca a <code>gotoAndStop</code> directamente.</p>
+  <ul class="feat-list">
+    <li>La acción <code>animar</code> puede bloquear la cadena de acciones hasta que la animación termine (<code>esperar: true</code>)</li>
+    <li>Los estados se definen en <code>GAME_DATA.personaje.estados[]</code> con su <code>label</code> (frame-label en Animate, nombre de animación en Spine)</li>
+    <li>Escala configurable: si el arte del personaje mira a la izquierda, <code>signoEscala: -1</code></li>
+  </ul>
+
+  <h3 id="nucleo-inventory">Inventario (Inventory)</h3>
+  <ul class="feat-list">
+    <li>Objetos con id, imagen, nombre, descripción, acciones al examinar/usar/combinar</li>
+    <li>Slots visuales en HUD configurables por nombre de instancia</li>
+    <li>Combinación de objetos: <code>{ tipo:"mezclar", obj1, obj2, resultado }</code></li>
+    <li>Persistido en guardado (SaveLoad v3)</li>
+  </ul>
+
+  <h3 id="nucleo-idioma">Localización (Idioma)</h3>
+  <p>Sistema de paquetes por idioma con cambio en runtime. Compatible con el <code>GAME_DATA.i18n</code> anterior.</p>
+  <table class="api-table">
+    <tr><th>API</th><th>Descripción</th></tr>
+    <tr><td>INKA.Idioma.set("en")</td><td>Cambia idioma en tiempo de ejecución</td></tr>
+    <tr><td>INKA.Idioma.cargarUrl("en", url)</td><td>Carga paquete desde archivo JSON externo</td></tr>
+    <tr><td>INKA.Idioma.cargarTodos({es:"...",en:"..."})</td><td>Carga varios paquetes a la vez</td></tr>
+    <tr><td>INKA.texto(clave, params)</td><td>Interpolación <code>{var}</code> y plural simple (one/other)</td></tr>
+  </table>
+
+  <h3 id="nucleo-dialogue">Diálogos (Dialogue)</h3>
+  <p>Sistema de diálogos completo, nativo en el núcleo. Reemplaza completamente a <code>inka-opciones.js</code>.</p>
+  <ul class="feat-list">
+    <li>Máquina de escribir configurable por velocidad (0 = instantáneo)</li>
+    <li>Un clic completa la línea; el siguiente avanza. Auto-avance opcional por línea</li>
+    <li>Líneas con hablante, retrato, voz (<code>vozId</code>) y velocidad/auto-avance individuales</li>
+    <li>Árbol de conversaciones (<code>GAME_DATA.conversaciones</code>): nodos con líneas/acciones/opciones</li>
+    <li>Opciones con condiciones: <code>siFlag</code>, <code>siNoFlag</code>, <code>siObjeto</code>, <code>siNoObjeto</code>, <code>fnCondicion</code></li>
+    <li>Opciones "una vez", ocultar o agrisar "ya dicho" (persistido en flags → sobrevive al save)</li>
+    <li>Render por panel propio (<code>opcion0..N</code>) o dinámico (texto del motor)</li>
+    <li>Cola segura: dos disparos casi simultáneos no se pisan</li>
+  </ul>
+
+  <h3 id="nucleo-scene">Escenas (Scene)</h3>
+  <p>Controla la escena activa: transiciones, hotspots, regiones, marcadores, sonido y HUD.</p>
+  <ul class="feat-list">
+    <li><code>Scene.ir(id, marcador)</code> — transición completa con limpieza del estado anterior</li>
+    <li><code>Scene.encontrar(nombre)</code> — busca nodo por nombre en la escena activa o en el root</li>
+    <li><code>Scene.marcador(nombre)</code> — devuelve coordenadas de un marcador de la escena</li>
+    <li>La acción <code>irEscena</code> corta la cadena de acciones en curso antes de transicionar</li>
+  </ul>
+
+  <h3 id="nucleo-saveload">Guardado (SaveLoad v3)</h3>
+  <p>El guardado más completo hasta la fecha. Bloquea durante diálogo, cutscene, peligro o minijuego.</p>
+  <table class="api-table">
+    <tr><th>API</th><th>Descripción</th></tr>
+    <tr><td>SaveLoad.guardar(slot)</td><td>Captura estado completo en localStorage</td></tr>
+    <tr><td>SaveLoad.cargar(slot)</td><td>Restaura estado completo</td></tr>
+    <tr><td>SaveLoad.listar()</td><td>Lista slots con metadatos</td></tr>
+    <tr><td>SaveLoad.hay(slot)</td><td>Boolean — ¿existe guardado en ese slot?</td></tr>
+    <tr><td>SaveLoad.borrar(slot)</td><td>Elimina guardado</td></tr>
+  </table>
+  <p>Captura: flags, inventario, selección, escena, posición+orientación del personaje, posición/orientación/waypoint-de-patrulla de cada NPC, reloj de juego y cámara (zoom + centro).</p>
+
+  <h3 id="nucleo-plugins">Sistema de Plugins (Plugins)</h3>
+  <p>Los plugins se registran con <code>INKA.registerPlugin(def)</code> antes o después de <code>Game.init()</code>. El motor los inicializa, ejecuta sus hooks y los destruye ordenadamente.</p>
+  <pre><code>INKA.registerPlugin({
+  nombre: <span class="s">"miPlugin"</span>,
+  requiere: [<span class="s">"telemetria"</span>],      <span class="c">// dependencias</span>
+  acciones: {
+    miAccion: function(a, inka, seguir) {
+      <span class="c">// return true si es asíncrono</span>
+      seguir();
+    }
+  },
+  api: { metodo: function() {} },  <span class="c">// disponible en INKA.miPlugin.*</span>
+  init: function(inka) {},
+  alEntrarEscena: function(cfg, inka) {},
+  tick: function(dt, inka) {},
+  destroy: function(inka) {}
+});</code></pre>
+
+  <h3 id="nucleo-game">Orquestador (Game)</h3>
+  <p>Punto de entrada único. Gestiona el loop de tick, el bus de eventos y el ciclo de vida global.</p>
+  <pre><code><span class="c">// Modo Animate:</span>
+INKA.Game.init(this, GAME_DATA, { driver: <span class="s">"animate"</span>, lib: lib });
+
+<span class="c">// Modo Spine:</span>
+<span class="k">await</span> INKA.Game.init(root, GAME_DATA, { driver: <span class="s">"spine"</span>, pixiApp: app });</code></pre>
+  <p>El bus de eventos (<code>INKA.Game.events</code>) emite: <code>escena:cambiada</code>, <code>opcion:elegida</code>, <code>conversacion:inicio/fin</code>, <code>objeto:examinado/recogido</code>, <code>region:entrar</code>, <code>juego:ganado/perdido/evaluacion</code>, <code>aprendizaje:objetivo</code>, y más.</p>
+</section>
+
+<!-- ═══════════════════ DRIVER ANIMATE ═══════════════════ -->
+<section id="driver-animate">
+  <div class="section-header">
+    <div class="section-icon">🎬</div>
+    <div>
+      <h2>Driver Animate (CreateJS)</h2>
+      <p><code>INKA-driver-animate__1_.js</code> · 11 KB · <span class="badge stable">Estable</span></p>
+    </div>
+  </div>
+
+  <p>Implementa <code>IRenderDriver</code> usando EaselJS/TweenJS/SoundJS. Comportamiento idéntico bit a bit al motor consolidado v2.6. Los symbols ya están arrastrados en el escenario de Adobe Animate antes de <code>Game.init()</code>.</p>
+
+  <div class="issue ok">
+    <div class="issue-icon">✅</div>
+    <div class="issue-body"><strong>requiereNodosPreexistentes = true</strong><span>Los nodos deben existir en el escenario de Animate antes de que el motor los busque. La validación temprana avisa si faltan.</span></div>
+  </div>
+
+  <h3 id="driver-animate-ciclo">Ciclo de vida</h3>
+  <ul class="feat-list">
+    <li><strong>init(stageRoot, opts):</strong> habilita Touch si es soportado, configura <code>createjs.Ticker.framerate</code> (default 30 fps), registra el handler de tick</li>
+    <li><strong>onTick(fn) / offTick(token):</strong> suscripción al loop de Animate</li>
+    <li><strong>destroy():</strong> desregistra el ticker, detiene todos los tweens con <code>createjs.Tween.removeAllTweens()</code></li>
+  </ul>
+
+  <h3 id="driver-animate-nodos">Nodos</h3>
+  <table class="api-table">
+    <tr><th>Método</th><th>Descripción</th></tr>
+    <tr><td>crearNodoEscena(id, cfg)</td><td>Instancia symbol de la librería de Animate o lo encuentra en root</td></tr>
+    <tr><td>crearNodoActor(cfg, escenaNodo)</td><td>Encuentra el NPC por nombre de instancia en el escenario</td></tr>
+    <tr><td>destruirNodo(nodo)</td><td>Elimina listeners y saca de la jerarquía de display</td></tr>
+  </table>
+
+  <h3 id="driver-animate-anim">Animación</h3>
+  <ul class="feat-list">
+    <li><strong>aplicarAnimacion(nodo, label):</strong> <code>nodo.gotoAndStop(label)</code></li>
+    <li><strong>reproducirAnimacion(nodo, label, onComplete):</strong> <code>gotoAndPlay(label)</code> + monitoreo frame-a-frame con <code>Util.finDeSegmento()</code> para detectar el fin del segmento</li>
+    <li><strong>mover(nodo, props, ms, easing, cb):</strong> <code>createjs.Tween.get(nodo).to(props, ms, ease).call(cb)</code></li>
+  </ul>
+
+  <h3 id="driver-animate-ui">UI Primitivas</h3>
+  <div class="grid2">
+    <div class="card"><div class="card-title">crearContenedor()</div><p><code>new createjs.Container()</code></p></div>
+    <div class="card"><div class="card-title">crearTexto(str, cfg, color)</div><p><code>new createjs.Text()</code> con fuente CSS</p></div>
+    <div class="card"><div class="card-title">crearHitArea(w, h)</div><p>Shape transparente (alpha 0.01) pero clickeable</p></div>
+    <div class="card"><div class="card-title">asignarAreaToque(nodo, ...)</div><p>Asigna <code>nodo.hitArea</code> con un Shape</p></div>
+  </div>
+
+  <h3>Sonido (createjs.Sound)</h3>
+  <table class="api-table">
+    <tr><th>Método</th><th>Descripción</th></tr>
+    <tr><td>sonido.registrar(lista)</td><td>Registra lista de {src, id} en createjs.Sound</td></tr>
+    <tr><td>sonido.desbloquear()</td><td>Resume el WebAudioPlugin context si está suspended</td></tr>
+    <tr><td>sonido.reproducir(id, opts)</td><td>Play una vez con volumen</td></tr>
+    <tr><td>sonido.musica(id, opts)</td><td>Play en loop continuo</td></tr>
+    <tr><td>sonido.setMute(bool)</td><td>Mute global via createjs.Sound.muted</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════ DRIVER SPINE ═══════════════════ -->
+<section id="driver-spine">
+  <div class="section-header">
+    <div class="section-icon">🦴</div>
+    <div>
+      <h2>Driver Spine (PixiJS v8)</h2>
+      <p><code>INKA-driver-spine__2_.js</code> · 24 KB · <span class="badge stable">Estable</span></p>
+    </div>
+  </div>
+
+  <p>Implementa <code>IRenderDriver</code> usando PixiJS v8 + <code>@esotericsoftware/spine-pixi-v8</code> + Howler.js. Los esqueletos se cargan por código desde <code>GAME_DATA.spineAssets</code>; no hay escenario de Animate.</p>
+
+  <div class="issue ok">
+    <div class="issue-icon">✅</div>
+    <div class="issue-body"><strong>requiereNodosPreexistentes = false</strong><span>Los nodos se crean programáticamente desde los datos del asset. La validación temprana de "MovieClip ya existente" no aplica.</span></div>
+  </div>
+
+  <h3>Dependencias (cargar antes)</h3>
+  <div class="pill-row">
+    <span class="pill">pixi.js@8</span>
+    <span class="pill">@esotericsoftware/spine-pixi-v8</span>
+    <span class="pill">howler@2</span>
+  </div>
+
+  <h3 id="driver-spine-ciclo">Ciclo de vida</h3>
+  <ul class="feat-list">
+    <li><strong>init(stageRoot, opts):</strong> requiere <code>opts.pixiApp</code>. Aplica <code>compatScaleProps()</code> al root para exponer <code>scaleX/scaleY/numChildren</code> compatibles con Animate. Expone <code>root.stage.canvas</code> para que Input lo encuentre.</li>
+    <li><strong>onTick / offTick:</strong> suscripción via <code>app.ticker.add/remove()</code></li>
+    <li><strong>destroy():</strong> remueve el token del ticker de Pixi</li>
+  </ul>
+
+  <h3 id="driver-spine-assets">Carga de assets</h3>
+  <pre><code><span class="c">// En GAME_DATA:</span>
+spineAssets: {
+  esqueletos: [
+    { alias: <span class="s">"heroeData"</span>,  src: <span class="s">"assets/heroe.skel"</span>  },
+    { alias: <span class="s">"heroeAtlas"</span>, src: <span class="s">"assets/heroe.atlas"</span> }
+  ],
+  imagenes: [
+    { alias: <span class="s">"fondoTaberna"</span>, src: <span class="s">"assets/fondos/taberna.png"</span> }
+  ]
+}
+
+<span class="c">// El driver llama:</span>
+<span class="k">await</span> driver.precargar(GAME_DATA.spineAssets);</code></pre>
+
+  <h3 id="driver-spine-eventos">Sistema de eventos (wrapper CreateJS→Pixi)</h3>
+  <p>El motor usa nombres de eventos CreateJS; el driver los traduce transparentemente a Pixi v8 via un mapa interno y wrappers <code>on()/off()</code> por container.</p>
+  <table class="api-table">
+    <tr><th>CreateJS</th><th>Pixi v8</th><th>Notas</th></tr>
+    <tr><td>click</td><td>pointerup</td><td>Filtrado por umbral de arrastre (12 px)</td></tr>
+    <tr><td>rollover/rollout</td><td>pointerover/out</td><td>Directo</td></tr>
+    <tr><td>mousedown</td><td>pointerdown</td><td>Directo</td></tr>
+    <tr><td>pressmove</td><td>pointermove</td><td>Mientras se mantiene pulsado</td></tr>
+    <tr><td>pressup</td><td>pointerup</td><td>Solo si el puntero se movió &gt;12px</td></tr>
+  </table>
+
+  <div class="issue info">
+    <div class="issue-icon">ℹ️</div>
+    <div class="issue-body"><strong>compatScaleProps()</strong><span> Se aplica a cada container creado para exponer <code>scaleX/scaleY</code> como getters/setters sobre <code>scale.x/scale.y</code>, y <code>numChildren</code> sobre <code>children.length</code>. Hace el código del motor transparente entre drivers.</span></div>
+  </div>
+
+  <h3 id="driver-spine-anim">Animación Spine</h3>
+  <ul class="feat-list">
+    <li><strong>aplicarAnimacion(nodo, nombre):</strong> <code>sk.state.setAnimation(0, nombre, true)</code> (loop)</li>
+    <li><strong>reproducirAnimacion(nodo, nombre, onComplete):</strong> <code>setAnimation(0, nombre, false)</code> + listener <code>complete</code> del AnimationState. Más confiable que escanear <code>currentFrame</code>.</li>
+    <li>Si el esqueleto no tiene la animación solicitada, loga un warning y llama <code>onComplete</code> para no bloquear la cadena</li>
+    <li>Los nombres de animación deben coincidir con los del editor de Spine (no con frame-labels)</li>
+  </ul>
+
+  <h3 id="driver-spine-tween">Tween propio</h3>
+  <p>Sin dependencia extra. Corre sobre el ticker de Pixi con interpolación y easings básicos.</p>
+  <div class="pill-row">
+    <span class="pill">linear</span><span class="pill">easeIn</span><span class="pill">easeOut</span><span class="pill">easeInOut</span>
+  </div>
+  <p>La función <code>mover(nodo, props, ms, easingId, onComplete)</code> devuelve un <code>handle</code> con propiedad <code>cancelado</code>. <code>detenerMovimiento(handle)</code> cancela el tween y lo saca del ticker.</p>
+
+  <h3 id="driver-spine-howler">Sonido (Howler.js)</h3>
+  <table class="api-table">
+    <tr><th>Método</th><th>Descripción</th></tr>
+    <tr><td>sonido.registrar(lista)</td><td>Crea instancias <code>Howl</code> por id</td></tr>
+    <tr><td>sonido.desbloquear()</td><td>No-op: Howler gestiona el desbloqueo internamente</td></tr>
+    <tr><td>sonido.reproducir(id, opts)</td><td>Devuelve <code>{ id, howl, stop() }</code></td></tr>
+    <tr><td>sonido.musica(id, opts)</td><td>Loop true, guarda referencia en <code>musicaActual</code></td></tr>
+    <tr><td>sonido.setMute(bool)</td><td><code>Howler.mute(bool)</code></td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════ CONTRATO DRIVER ═══════════════════ -->
+<section id="driver-contratos">
+  <div class="section-header">
+    <div class="section-icon">📋</div>
+    <div>
+      <h2>Contrato IRenderDriver</h2>
+      <p>Interfaz que debe implementar cualquier driver de render</p>
+    </div>
+  </div>
+  <p>Cualquier driver personalizado debe implementar todos estos métodos para ser compatible con el núcleo:</p>
+  <table class="api-table">
+    <tr><th>Método</th><th>Descripción</th></tr>
+    <tr><td>init(root, opts)</td><td>Inicializa el driver con el nodo raíz</td></tr>
+    <tr><td>onTick(fn) → token</td><td>Suscribe función al loop de render</td></tr>
+    <tr><td>offTick(token)</td><td>Desuscribe función del loop</td></tr>
+    <tr><td>destroy()</td><td>Limpia todos los recursos</td></tr>
+    <tr><td>crearNodoEscena(id, cfg)</td><td>Crea/devuelve nodo de escena</td></tr>
+    <tr><td>crearNodoActor(cfg, escenaNodo)</td><td>Crea nodo de actor/NPC</td></tr>
+    <tr><td>destruirNodo(nodo)</td><td>Elimina nodo y sus listeners</td></tr>
+    <tr><td>aplicarAnimacion(nodo, label)</td><td>Aplica estado de animación (estático)</td></tr>
+    <tr><td>reproducirAnimacion(nodo, label, cb)</td><td>Reproduce animación y llama cb al terminar</td></tr>
+    <tr><td>mover(nodo, props, ms, easing, cb)</td><td>Tween de propiedades con callback</td></tr>
+    <tr><td>detenerMovimiento(handle)</td><td>Cancela tween en curso</td></tr>
+    <tr><td>sonido.registrar/reproducir/musica/detener/setMute</td><td>Sistema de audio</td></tr>
+    <tr><td>crearContenedor()</td><td>Contenedor de display vacío</td></tr>
+    <tr><td>crearTexto(str, cfg, color)</td><td>Nodo de texto</td></tr>
+    <tr><td>crearHitArea(w, h)</td><td>Área de clic invisible</td></tr>
+    <tr><td>asignarAreaToque(nodo, x, y, w, h)</td><td>Área de toque ampliada</td></tr>
+    <tr><td>dimensionesCanvas(root)</td><td>→ { ancho, alto }</td></tr>
+    <tr><td>animarNodo(nodo, label, loop)</td><td>Anima nodo arbitrario (HUD, slots)</td></tr>
+    <tr><td>hitTestNombrado(nodo, nombre)</td><td>Busca hijo por nombre de instancia</td></tr>
+  </table>
+  <p>Propiedad requerida: <code>requiereNodosPreexistentes</code> (boolean) — controla si la validación temprana de nodos está activa.</p>
+</section>
+
+<!-- ═══════════════════ PLUGIN TELEMETRÍA ═══════════════════ -->
+<section id="plugin-telemetria">
+  <div class="section-header">
+    <div class="section-icon">📊</div>
+    <div>
+      <h2>Plugin Telemetría v3.1</h2>
+      <p><code>inka-plugin-telemetria__2_.js</code> · 25 KB · <span class="badge stable">Estable</span></p>
+    </div>
+  </div>
+
+  <p>Plugin de telemetría educativa con doble modo de operación: xAPI compatible con Articulate/LMS, o standalone con exportación JSON/CSV y endpoint HTTP propio.</p>
+
+  <h3 id="telem-modos">Modos de operación (autodetectados)</h3>
+  <div class="driver-grid">
+    <div class="driver-card">
+      <h4>🎓 Modo xAPI (Articulate)</h4>
+      <p style="font-size:13px;color:var(--dim);margin:0">Se activa si <code>window.ADL</code> y <code>window.ADL.XAPIWrapper</code> están disponibles. Storyline los inyecta automáticamente al correr en un LMS. Envía statements granulares en tiempo real al LRS configurado.</p>
+    </div>
+    <div class="driver-card">
+      <h4>📁 Modo Standalone</h4>
+      <p style="font-size:13px;color:var(--dim);margin:0">Guarda todo en memoria. Exporta JSON/CSV para análisis manual. Compatible con endpoint HTTP propio (<code>autoenviar + intervalo</code>).</p>
+    </div>
+  </div>
+
+  <h3 id="telem-xapi">Capa xAPI — Statements emitidos</h3>
+  <table class="api-table">
+    <tr><th>Verbo</th><th>Cuándo se emite</th></tr>
+    <tr><td>experienced</td><td>Al entrar a cada escena nueva</td></tr>
+    <tr><td>answered</td><td>Al elegir cada opción de diálogo</td></tr>
+    <tr><td>progressed</td><td>Al completar un objetivo pedagógico (<code>aprendizaje:objetivo</code>)</td></tr>
+    <tr><td>completed</td><td>Al cerrar el juego (beforeunload / destroy)</td></tr>
+    <tr><td>passed / failed</td><td>Según si el score supera <code>umbralAprobacion</code></td></tr>
+  </table>
+
+  <h3 id="telem-standalone">Modo standalone — Configuración</h3>
+  <pre><code><span class="c">// En GAME_DATA.telemetria:</span>
+telemetria: {
+  alumno:           <span class="s">"estudiante-001"</span>,
+  curso:            <span class="s">"6B"</span>,
+  actividadId:      <span class="s">"https://escuela.com/juego/fracciones"</span>,
+  actividadNombre:  <span class="s">"Aventura de fracciones"</span>,
+  scoreMax:         <span class="n">100</span>,
+  umbralAprobacion: <span class="n">60</span>,
+  maxEventos:       <span class="n">2000</span>,
+  <span class="c">// solo standalone:</span>
+  endpoint:   <span class="s">"https://mi-backend.com/telemetria"</span>,
+  autoenviar: <span class="k">true</span>,
+  intervalo:  <span class="n">15000</span>  <span class="c">// ms</span>
+}</code></pre>
+
+  <h3 id="telem-api">API pública — <code>INKA.telemetria.*</code></h3>
+  <table class="api-table">
+    <tr><th>Método</th><th>Descripción</th></tr>
+    <tr><td>.resumen()</td><td>Métricas rápidas: duración, score, decisiones, reintentos, aprobado</td></tr>
+    <tr><td>.sesion()</td><td>Snapshot completo con secuencia de eventos ordenados (deep-copy)</td></tr>
+    <tr><td>.exportarJSON()</td><td>Descarga JSON de la sesión (con revokeObjectURL para evitar leak)</td></tr>
+    <tr><td>.exportarCSV()</td><td>Descarga CSV con BOM UTF-8 (Excel lo abre sin configurar)</td></tr>
+    <tr><td>.enviar()</td><td>Fuerza envío al endpoint (modo standalone) → Promise&lt;boolean&gt;</td></tr>
+    <tr><td>.marcar(tipo, datos)</td><td>Registra hito personalizado con seq y timestamp</td></tr>
+    <tr><td>.puntos(n)</td><td>Suma n puntos al score de sesión</td></tr>
+    <tr><td>.limpiar()</td><td>Nueva partida sin recargar página (mantiene <code>_seq</code> para unicidad)</td></tr>
+    <tr><td>.esModoXAPI()</td><td>Boolean — ¿está corriendo dentro de Articulate/LRS?</td></tr>
+  </table>
+
+  <h3>Métricas registradas automáticamente</h3>
+  <ul class="feat-list">
+    <li>Tiempo acumulado por escena (ms)</li>
+    <li>Historial de decisiones con timestamp, texto, correcto/incorrecto y escena</li>
+    <li>Objetos examinados (con conteo de repeticiones)</li>
+    <li>Objetos recogidos</li>
+    <li>Regiones visitadas con timestamp</li>
+    <li>Número de conversaciones completadas</li>
+    <li>Reintentos (cargar partida cuando ya había actividad)</li>
+    <li>Objetivos pedagógicos cumplidos</li>
+  </ul>
+
+  <h3>Envío HTTP (<code>enviarHTTP</code>)</h3>
+  <ul class="feat-list">
+    <li>Usa <code>sendBeacon</code> si el payload cabe en ≤63 000 bytes (límite real del navegador)</li>
+    <li>Cae a <code>fetch</code> con <code>keepalive: true</code> para payloads más grandes</li>
+    <li>Guarda de <code>S = null</code>: si <code>destroy()</code> corre antes de <code>init()</code>, no lanza TypeError</li>
+  </ul>
+
+  <h3 id="telem-issues">Issues conocidos en v3.1</h3>
+  <div class="issue warn">
+    <div class="issue-icon">⚠️</div>
+    <div class="issue-body">
+      <strong>F-T1 — Null guard faltante en enviarHTTP()</strong>
+      <span>La guarda <code>if (!S) return Promise.resolve(false)</code> existe en <code>enviarHTTP()</code> pero el <code>null check</code> antes de <code>instantanea()</code> no cubre el caso de llamada desde el timer automático (<code>_timerEnvio</code>) cuando <code>destroy()</code> ya corrió pero el interval aún no fue limpiado. <strong>Severidad: baja</strong> — ocurre solo en race condition de shutdown.</span>
+    </div>
+  </div>
+  <div class="issue ok">
+    <div class="issue-icon">✅</div>
+    <div class="issue-body"><strong>Correcciones aplicadas en v3.1</strong><span> <code>cfg()</code> recibe <code>inka</code> por parámetro (no cierre global). <code>stmtResumen()</code> no envía si S es null. <code>descargar()</code> revoca URL tras 2s. CSV añade BOM UTF-8. Threshold sendBeacon elevado a 63 000. <code>limpiar()</code> usa <code>_inka</code> local. <code>destroy()</code> llama <code>cerrarEscena()</code> antes de statements. <code>_seq</code> no se resetea con <code>limpiar()</code>.</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ PLUGIN IA ═══════════════════ -->
+<section id="plugin-ia">
+  <div class="section-header">
+    <div class="section-icon">🤖</div>
+    <div>
+      <h2>Plugin IA v2.1</h2>
+      <p><code>inka-plugin-ia__3_.js</code> · 20 KB · <span class="badge stable">Estable</span></p>
+    </div>
+  </div>
+
+  <p>Adaptador pluggable para traducción, análisis pedagógico, generación de diálogo y feedback adaptativo. Lee telemetría si el plugin está activo; <strong>nunca escribe en él</strong>.</p>
+
+  <h3 id="ia-backend">Backend externo (window.INKA_IA)</h3>
+  <p>El plugin no trae ningún modelo de IA. Delega en un objeto <code>window.INKA_IA</code> que el proyecto debe proveer antes de cargar el juego.</p>
+  <pre><code>window.INKA_IA = {
+  <span class="c">// Traduce texto de idioma 'de' a 'a'</span>
+  traducir: <span class="k">async</span> (texto, de, a) => <span class="s">"translated text"</span>,
+
+  <span class="c">// Analiza decisiones pedagógicas del estudiante</span>
+  analizarDecision: <span class="k">async</span> (contexto) => ({
+    resumen: <span class="s">"El estudiante..."</span>,
+    recomendacion: <span class="s">"Se sugiere..."</span>
+  }),
+
+  <span class="c">// Genera texto libre con contexto</span>
+  generarDialogo: <span class="k">async</span> (prompt, contexto) => <span class="s">"texto generado"</span>
+};</code></pre>
+  <p>Si una capacidad no está configurada, el plugin la declara como no disponible y el motor continúa sin interrupciones.</p>
+
+  <h3 id="ia-contexto">Contexto enriquecido con telemetría</h3>
+  <p>Cuando el plugin de telemetría está activo, el contexto enviado a la IA incluye datos reales de sesión:</p>
+  <ul class="feat-list">
+    <li>Últimas 10 decisiones del estudiante (con correcto/incorrecto y escena)</li>
+    <li>Últimos 20 eventos de sesión</li>
+    <li>Tiempo acumulado por escena</li>
+    <li>Objetivos pedagógicos cumplidos</li>
+    <li>Duración total de la sesión en ms</li>
+    <li>Número de visitas a la escena actual</li>
+  </ul>
+  <p>Si telemetría no está disponible, cae a un historial local de decisiones capturado directamente.</p>
+
+  <h3 id="ia-acciones">Acciones disponibles desde GAME_DATA</h3>
+  <pre><code><span class="c">// Generar pista y guardar en State:</span>
+{ tipo: <span class="s">"iaPista"</span>, prompt: <span class="s">"Dame una pista sobre..."</span>,
+  guardarEn: <span class="s">"pista"</span>, timeout: <span class="n">8000</span> }
+
+<span class="c">// Generar feedback de la escena actual:</span>
+{ tipo: <span class="s">"iaFeedback"</span>, guardarEn: <span class="s">"feedbackEscena"</span>,
+  timeout: <span class="n">10000</span> }</code></pre>
+  <p>Ambas acciones son <strong>asíncronas</strong> (devuelven <code>true</code> al motor). Usan una cola interna que serializa las llamadas al backend para no solaparlas.</p>
+
+  <h3>Timeout wrapper</h3>
+  <p>Toda llamada al backend está envuelta en <code>conTimeout(promesa, ms, fallback)</code>. Si el proveedor no responde a tiempo, la promesa resuelve con el <code>fallback</code> (nunca rechaza) y la cadena del motor continúa.</p>
+
+  <h3 id="ia-api">API pública — <code>INKA.ia.*</code></h3>
+  <table class="api-table">
+    <tr><th>Método</th><th>Descripción</th></tr>
+    <tr><td>.traducir(texto, de, a)</td><td>→ Promise&lt;string&gt;. Fallback = texto original</td></tr>
+    <tr><td>.generar(prompt, ctx)</td><td>→ Promise&lt;string&gt;. Contexto enriquecido con telemetría</td></tr>
+    <tr><td>.analizar()</td><td>→ Promise&lt;{resumen, recomendacion}&gt;. Timeout mín. 5s</td></tr>
+    <tr><td>.feedbackEscena(id, timeout)</td><td>→ Promise&lt;string&gt;. Feedback pedagógico para una escena</td></tr>
+    <tr><td>.decisiones()</td><td>Copia inmutable del historial local de decisiones</td></tr>
+    <tr><td>.tiene(cap)</td><td>Boolean — ¿el proveedor tiene esta capacidad?</td></tr>
+  </table>
+
+  <h3>Feedback automático por escena</h3>
+  <p>Si <code>GAME_DATA.ia.feedbackAutomatico: true</code>, el plugin genera feedback al entrar a cada escena (excepto la primera visita, que aún no tiene contexto).</p>
+  <pre><code><span class="c">// En GAME_DATA:</span>
+ia: {
+  feedbackAutomatico:  <span class="k">true</span>,
+  feedbackGuardarEn:   <span class="s">"feedbackEscena"</span>,  <span class="c">// flag de State</span>
+  feedbackTimeout:     <span class="n">10000</span>,
+  maxDecisionesAnalisis: <span class="n">50</span>,
+  timeoutDefault:      <span class="n">8000</span>
+}</code></pre>
+
+  <h3 id="ia-issues">Issues conocidos en v2.1</h3>
+  <div class="issue warn">
+    <div class="issue-icon">⚠️</div>
+    <div class="issue-body">
+      <strong>F13 — Race condition: IA lee telemetría antes de que el hook de escena haya disparado</strong>
+      <span><code>Plugins.alEntrarEscena()</code> itera la lista en orden de registro. Si el plugin IA fue registrado <em>antes</em> que telemetría, su hook <code>alEntrarEscena</code> corre antes de que telemetría registre el evento <code>"escena"</code> de la visita actual. El <code>setTimeout(0)</code> en el código mitiga esto cediendo el turno, pero no garantiza el orden si hay operaciones asíncronas intermedias. <strong>Estado: parcialmente mitigado.</strong></span>
+    </div>
+  </div>
+  <div class="issue ok">
+    <div class="issue-icon">✅</div>
+    <div class="issue-body"><strong>Correcciones aplicadas en v2.1</strong><span> Precedencia <code>&amp;&amp;/||</code> corregida en <code>contextoEscena()</code>. Catch vacío ahora loga en modo debug. <code>camel()</code> eliminada (era identidad sin efecto). Timeouts consistentes en <code>analizar()</code>. Guardia <code>_activo</code> añadida en <code>generarFeedbackEscena()</code>.</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ EDITOR DE DIÁLOGOS ═══════════════════ -->
+<section id="editor-dialogos">
+  <div class="section-header">
+    <div class="section-icon">💬</div>
+    <div>
+      <h2>Editor de Diálogos</h2>
+      <p>Herramienta visual standalone de autor · No va a producción</p>
+    </div>
+  </div>
+
+  <p>Herramienta HTML de una sola página para crear y editar grafos de conversación compatibles con el sistema <code>GAME_DATA.conversaciones</code> del motor. Se sube al servidor solo para autoría; el juego en producción no la necesita.</p>
+
+  <h3 id="editor-v2">Versión v2 (<code>inka-dialogos__2_.html</code>)</h3>
+  <div class="meta-row">
+    <span class="meta-chip">59 KB</span>
+    <span class="meta-chip ok">Estable</span>
+    <span class="meta-chip">Grafo de nodos v2</span>
+    <span class="meta-chip">Storage key: inka_dialogos_v2</span>
+  </div>
+  <ul class="feat-list">
+    <li>Editor visual de grafo de nodos con arrastrar/soltar en lienzo con pan y zoom</li>
+    <li>Cada nodo tiene: ID, líneas de diálogo (hablante + texto), condiciones de entrada y salida, opciones con goto/fin</li>
+    <li>Validación en tiempo real: nodos huérfanos, opciones sin destino, IDs duplicados</li>
+    <li>Export/import de proyecto JSON (<code>dialogos.inka-proyecto.json</code>)</li>
+    <li>Persistencia en localStorage (auto-save)</li>
+    <li>Múltiples conversaciones en el mismo proyecto</li>
+    <li>Auto-layout de nodos</li>
+    <li>Zoom fit y reset 100%</li>
+    <li>Undo con historial</li>
+  </ul>
+
+  <h3 id="editor-v3">Versión v3 (<code>inka-dialogos__3_.html</code>)</h3>
+  <div class="meta-row">
+    <span class="meta-chip">59 KB</span>
+    <span class="meta-chip ok">Estable</span>
+    <span class="meta-chip">+9 líneas vs v2</span>
+  </div>
+  <p>Versión con correcciones adicionales sobre v2. El código interno es el mismo editor v2 con:</p>
+  <ul class="feat-list">
+    <li><code>URL.revokeObjectURL()</code> añadido tras descarga de proyecto (evita leak de memoria)</li>
+    <li>Corrección de gestión de foco en inputs durante drag del nodo</li>
+    <li>Export: el nombre de archivo es <code>dialogos.inka-proyecto.json</code> (consistente con v2)</li>
+  </ul>
+  <div class="issue info">
+    <div class="issue-icon">ℹ️</div>
+    <div class="issue-body"><strong>Recomendación</strong><span> Usar <strong>v3</strong> como versión de trabajo. Ambas escriben al mismo <code>localStorage</code> bajo la clave <code>inka_dialogos_v2</code>, por lo que los proyectos son compatibles entre versiones.</span></div>
+  </div>
+
+  <h3>Flujo de trabajo recomendado</h3>
+  <ul class="feat-list">
+    <li>Crear árbol de conversación en el editor → exportar JSON</li>
+    <li>Copiar el JSON exportado dentro del bloque <code>GAME_DATA.conversaciones</code></li>
+    <li>En el juego: <code>{ tipo: "conversacion", id: "id_del_nodo_inicio" }</code></li>
+  </ul>
+</section>
+
+<!-- ═══════════════════ INTEGRACIÓN ANIMATE ═══════════════════ -->
+<section id="integracion-animate">
+  <div class="section-header">
+    <div class="section-icon">🎨</div>
+    <div>
+      <h2>Integración con Adobe Animate</h2>
+      <p>Flujo de trabajo con CreateJS (driver por defecto)</p>
+    </div>
+  </div>
+
+  <h3>Orden de carga (HTML o Fotograma 1)</h3>
+  <pre><code><span class="c">&lt;!-- 1. CreateJS --&gt;</span>
+&lt;script src="createjs.min.js"&gt;&lt;/script&gt;
+
+<span class="c">&lt;!-- 2. Driver ANTES del núcleo --&gt;</span>
+&lt;script src="INKA-driver-animate.js"&gt;&lt;/script&gt;
+
+<span class="c">&lt;!-- 3. Núcleo --&gt;</span>
+&lt;script src="INKA-nucleo.js"&gt;&lt;/script&gt;
+
+<span class="c">&lt;!-- 4. Plugins (orden importa: telemetría antes que IA) --&gt;</span>
+&lt;script src="inka-plugin-telemetria.js"&gt;&lt;/script&gt;
+&lt;script src="inka-plugin-ia.js"&gt;&lt;/script&gt;
+
+<span class="c">&lt;!-- 5. Tu código de juego --&gt;</span>
+&lt;script src="game-data.js"&gt;&lt;/script&gt;</code></pre>
+
+  <h3>Fotograma 1 del escenario de Animate</h3>
+  <pre><code>this.stop();
+INKA.Game.init(this, GAME_DATA, {
+  driver: <span class="s">"animate"</span>,
+  lib: lib    <span class="c">// solo si usas escenas dinámicas</span>
+});
+<span class="c">// NO cablear stagemousedown a mano: el motor ya lo hace</span>
+<span class="c">// (si quieres tu propio handler: GAME_DATA.input.caminarConClicEnEscenario=false)</span></code></pre>
+</section>
+
+<!-- ═══════════════════ INTEGRACIÓN SPINE ═══════════════════ -->
+<section id="integracion-spine">
+  <div class="section-header">
+    <div class="section-icon">🎯</div>
+    <div>
+      <h2>Integración con PixiJS + Spine</h2>
+      <p>Flujo de trabajo sin Adobe Animate</p>
+    </div>
+  </div>
+
+  <pre><code><span class="c">&lt;!-- 1. Dependencias del driver Spine --&gt;</span>
+&lt;script src="https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/@esotericsoftware/spine-pixi-v8/dist/iife/spine-pixi-v8.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/howler@2/dist/howler.min.js"&gt;&lt;/script&gt;
+
+<span class="c">&lt;!-- 2. Driver Spine --&gt;</span>
+&lt;script src="INKA-driver-spine.js"&gt;&lt;/script&gt;
+
+<span class="c">&lt;!-- 3. Núcleo + plugins --&gt;</span>
+&lt;script src="INKA-nucleo.js"&gt;&lt;/script&gt;</code></pre>
+
+  <pre><code><span class="c">// index.js (o módulo ES):</span>
+<span class="k">const</span> app = <span class="k">new</span> PIXI.Application();
+<span class="k">await</span> app.init({ resizeTo: window, backgroundAlpha: <span class="n">0</span> });
+document.body.appendChild(app.canvas);
+
+<span class="k">const</span> root = <span class="k">new</span> PIXI.Container();
+app.stage.addChild(root);
+
+<span class="k">await</span> INKA.Game.init(root, GAME_DATA, {
+  driver: <span class="s">"spine"</span>,
+  pixiApp: app
+});</code></pre>
+
+  <div class="issue info">
+    <div class="issue-icon">ℹ️</div>
+    <div class="issue-body"><strong>Diferencia clave de modelo</strong><span> En Animate los symbols ya están en el escenario antes de <code>init()</code>. En Spine no hay "escenario": los esqueletos se crean por datos. Debes describir los assets en <code>GAME_DATA.spineAssets</code> y añadir <code>.spine</code> a cada escena y actor.</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ INTEGRACIÓN ARTICULATE ═══════════════════ -->
+<section id="integracion-articulate">
+  <div class="section-header">
+    <div class="section-icon">🏫</div>
+    <div>
+      <h2>Integración con Articulate Storyline</h2>
+      <p>Publicación como Web Object para LMS con xAPI</p>
+    </div>
+  </div>
+
+  <ol style="color:var(--dim);font-size:14px;padding-left:20px;line-height:2">
+    <li>Publica tu juego INKA como HTML independiente (carpeta con todos los assets).</li>
+    <li>Insértalo en Storyline como <strong>"Web Object"</strong> (Insert → Web Object → desde carpeta local).</li>
+    <li>Storyline inyecta <code>window.ADL</code> automáticamente al correr en un LMS compatible.</li>
+    <li>El plugin de telemetría detecta <code>window.ADL.XAPIWrapper</code> y activa el modo xAPI.</li>
+    <li>Los statements se envían al LRS configurado en Storyline sin configuración adicional.</li>
+  </ol>
+
+  <div class="issue ok">
+    <div class="issue-icon">✅</div>
+    <div class="issue-body"><strong>Identidad del estudiante</strong><span> Si Articulate ya proveyó la identidad del alumno en <code>window.ADL.XAPIWrapper.lrs.actor</code>, el plugin la usa directamente para los statements xAPI.</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ GAME_DATA ═══════════════════ -->
+<section id="game-data">
+  <div class="section-header">
+    <div class="section-icon">📝</div>
+    <div>
+      <h2>Referencia GAME_DATA</h2>
+      <p>Objeto de configuración completo del juego</p>
+    </div>
+  </div>
+
+  <pre><code><span class="k">var</span> GAME_DATA = {
+  titulo: <span class="s">"Mi Aventura"</span>,
+  debug: <span class="k">false</span>, debugOverlay: <span class="k">false</span>,
+
+  <span class="c">/* Personaje principal */</span>
+  personaje: {
+    instancia: <span class="s">"heroe"</span>,
+    velocidad: <span class="n">5</span>,
+    signoEscala: <span class="n">1</span>,      <span class="c">// -1 si el arte mira a la izquierda</span>
+    estados: [
+      { id: <span class="s">"idle"</span>,    label: <span class="s">"idle"</span>    },
+      { id: <span class="s">"caminar"</span>, label: <span class="s">"walk"</span>    }
+    ],
+    spine: { skeleton: <span class="s">"heroeData"</span>, atlas: <span class="s">"heroeAtlas"</span>, escala: <span class="n">0.5</span> }
+  },
+
+  <span class="c">/* HUD */</span>
+  hud: {
+    globoDialogo: <span class="s">"globoDialogo"</span>,
+    campoNombre:  <span class="s">"nombre"</span>,
+    retrato:      <span class="s">"retrato"</span>,
+    etiqueta:     <span class="s">"etiquetaHotspot"</span>,
+    cursorObjeto: <span class="s">"cursorObjeto"</span>
+  },
+
+  <span class="c">/* Input */</span>
+  input: {
+    caminarConClicEnEscenario: <span class="k">true</span>,
+    arrastrar: <span class="k">false</span>,
+    umbralArrastre: <span class="n">12</span>,      <span class="c">// px</span>
+    teclaRevelar: <span class="s">"Space"</span>
+  },
+
+  <span class="c">/* Escenas */</span>
+  escenas: [{
+    id: <span class="s">"taberna"</span>,
+    musica: <span class="s">"musicaTaberna"</span>,
+    inicioPersonaje: { x: <span class="n">400</span>, y: <span class="n">350</span> },
+    walkable: {
+      poligono: [{ x:<span class="n">50</span>,y:<span class="n">200</span> }, { x:<span class="n">750</span>,y:<span class="n">200</span> }, { x:<span class="n">750</span>,y:<span class="n">400</span> }, { x:<span class="n">50</span>,y:<span class="n">400</span> }]
+    },
+    profundidad: { objetos: [<span class="s">"columna"</span>, <span class="s">"mostrador"</span>] },
+    camara: { ancho: <span class="n">1600</span>, alto: <span class="n">600</span>, seguir: <span class="k">true</span>, suavizado: <span class="n">0.1</span> },
+    hotspots: [{
+      id: <span class="s">"puerta"</span>, instancia: <span class="s">"puerta"</span>, nombre: <span class="s">"Puerta"</span>,
+      acciones: [{ tipo: <span class="s">"irEscena"</span>, escena: <span class="s">"exterior"</span> }]
+    }],
+    actores: [{ <span class="c">/* ver sección Actores */</span> }],
+    spine: { fondo: <span class="s">"fondoTaberna"</span> }
+  }],
+
+  <span class="c">/* Inventario */</span>
+  inventario: {
+    slots: 4, prefijo: <span class="s">"slot"</span>,
+    objetos: [{
+      id: <span class="s">"llave"</span>, imagen: <span class="s">"itemLlave"</span>, nombre: <span class="s">"Llave",</span>
+      acciones: [{ tipo: <span class="s">"dialogo"</span>, texto: <span class="s">"Una llave oxidada."</span> }]
+    }]
+  },
+
+  <span class="c">/* Conversaciones (del editor de diálogos) */</span>
+  conversaciones: { <span class="c">/* JSON exportado por el editor */</span> },
+
+  <span class="c">/* Sonidos */</span>
+  sonidos: [{ id: <span class="s">"puerta"</span>, src: <span class="s">"audio/puerta.mp3"</span> }],
+
+  <span class="c">/* Localización */</span>
+  idioma: <span class="s">"es"</span>,
+  i18n: { es: { saludo: <span class="s">"Hola"</span> }, en: { saludo: <span class="s">"Hello"</span> } },
+
+  <span class="c">/* Reloj */</span>
+  reloj: { horaInicial: <span class="s">"08:00"</span>, velocidad: <span class="n">60</span>, agenda: [] },
+
+  <span class="c">/* Telemetría */</span>
+  telemetria: { <span class="c">/* ver sección Plugin Telemetría */</span> },
+
+  <span class="c">/* IA */</span>
+  ia: { feedbackAutomatico: <span class="k">false</span>, timeoutDefault: <span class="n">8000</span> },
+
+  <span class="c">/* Assets Spine (solo driver "spine") */</span>
+  spineAssets: { esqueletos: [], imagenes: [] }
+};</code></pre>
+</section>
+
+<!-- ═══════════════════ ESTADO OPERACIONAL ═══════════════════ -->
+<section id="estado">
+  <div class="section-header">
+    <div class="section-icon">🚦</div>
+    <div>
+      <h2>Estado operacional del sistema</h2>
+      <p>Resumen de aptitud para producción por componente</p>
+    </div>
+  </div>
+
+  <table class="api-table">
+    <tr>
+      <th>Componente</th><th>Versión</th><th>Estado</th><th>Notas</th>
+    </tr>
+    <tr><td>INKA-nucleo.js</td><td>v2.7</td><td><span class="badge stable">Producción</span></td><td>Render-agnóstico, sin deuda técnica conocida</td></tr>
+    <tr><td>Driver Animate</td><td>v1</td><td><span class="badge stable">Producción</span></td><td>Idéntico al motor consolidado v2.6</td></tr>
+    <tr><td>Driver Spine</td><td>v2</td><td><span class="badge stable">Producción</span></td><td>PixiJS v8 + Spine. Wrapper de eventos completo.</td></tr>
+    <tr><td>Plugin Telemetría</td><td>v3.1</td><td><span class="badge warn">Casi listo</span></td><td>1 issue residual (null guard en timer)</td></tr>
+    <tr><td>Plugin IA</td><td>v2.1</td><td><span class="badge warn">Casi listo</span></td><td>F13 parcialmente mitigado con setTimeout(0)</td></tr>
+    <tr><td>Editor Diálogos v2</td><td>v2</td><td><span class="badge stable">Producción</span></td><td>Herramienta de autor, no va a producción</td></tr>
+    <tr><td>Editor Diálogos v3</td><td>v2+fix</td><td><span class="badge stable">Producción</span></td><td>Versión recomendada para trabajo de autor</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════ ISSUES PENDIENTES ═══════════════════ -->
+<section id="issues">
+  <div class="section-header">
+    <div class="section-icon">🐛</div>
+    <div>
+      <h2>Issues pendientes</h2>
+      <p>2 issues residuales identificados post-parcheo</p>
+    </div>
+  </div>
+
+  <div class="issue warn">
+    <div class="issue-icon">⚠️</div>
+    <div class="issue-body">
+      <strong>F-T1 — Null guard en enviarHTTP() del plugin Telemetría</strong>
+      <span>
+        <strong>Archivo:</strong> <code>inka-plugin-telemetria.js</code><br>
+        <strong>Ubicación:</strong> función <code>enviarHTTP()</code>, interacción con el timer automático <code>_timerEnvio</code><br>
+        <strong>Descripción:</strong> Si <code>destroy()</code> se llama y el <code>clearInterval(_timerEnvio)</code> no alcanza a ejecutarse antes de que el timer dispare una vez más, <code>enviarHTTP(inka)</code> puede ser llamado con <code>S = null</code>. La guarda <code>if (!S)</code> al inicio de la función cubre esto, pero el <code>_inka</code> del cierre ya fue puesto a <code>null</code> en <code>destroy()</code>, por lo que el <code>cfg(inka)</code> interno recibiría un valor nulo.<br>
+        <strong>Impacto:</strong> Bajo — solo ocurre en la ventana de milisegundos entre <code>clearInterval</code> y la última ejecución del timer.<br>
+        <strong>Fix sugerido:</strong> Añadir <code>if (!_inka || !S) return Promise.resolve(false);</code> al inicio de <code>enviarHTTP()</code>.
+      </span>
+    </div>
+  </div>
+
+  <div class="issue warn">
+    <div class="issue-icon">⚠️</div>
+    <div class="issue-body">
+      <strong>F13 — Race condition IA ↔ Telemetría en alEntrarEscena()</strong>
+      <span>
+        <strong>Archivo:</strong> <code>inka-plugin-ia.js</code><br>
+        <strong>Ubicación:</strong> hook <code>alEntrarEscena()</code>, función <code>Plugins.alEntrarEscena()</code> del núcleo<br>
+        <strong>Descripción:</strong> Si el plugin IA se registró antes que telemetría, su hook <code>alEntrarEscena</code> se ejecuta primero. El <code>setTimeout(0)</code> cede el turno a handlers síncronos pendientes, pero si el hook de telemetría <code>suscribir → on("escena:cambiada")</code> es también asíncrono o depende de un event-loop posterior, el conteo de visitas puede estar una visita por debajo.<br>
+        <strong>Impacto:</strong> Medio — el feedback automático nunca se genera en revisitas cuando el orden de registro es IA → Telemetría.<br>
+        <strong>Fix sugerido:</strong> Registrar siempre telemetría antes que IA (ya documentado como requisito), o que el núcleo garantice el orden de llamada de hooks según el campo <code>requiere</code>.
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ORDEN DE CARGA ═══════════════════ -->
+<section id="orden-carga">
+  <div class="section-header">
+    <div class="section-icon">📋</div>
+    <div>
+      <h2>Orden de carga obligatorio</h2>
+      <p>Secuencia de scripts para cada configuración</p>
+    </div>
+  </div>
+
+  <h3>Con Adobe Animate (CreateJS)</h3>
+  <div class="card">
+    <div class="card-title">1️⃣ createjs.min.js</div>
+    <p>EaselJS + TweenJS + SoundJS. Publicado por Animate o CDN.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">2️⃣ INKA-driver-animate.js</div>
+    <p>Registra <code>global.INKA_DriverAnimate</code>. Debe estar disponible antes del núcleo.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">3️⃣ INKA-nucleo.js</div>
+    <p>Crea la variable global <code>INKA</code> y expone <code>INKA.registerPlugin</code>.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">4️⃣ inka-plugin-telemetria.js</div>
+    <p>Se auto-registra via <code>INKA.registerPlugin()</code>. <strong>Siempre antes que el plugin IA.</strong></p>
+  </div>
+  <div class="card">
+    <div class="card-title">5️⃣ inka-plugin-ia.js</div>
+    <p>Declara <code>requiere: ["telemetria"]</code>. Si telemetría ya está registrada, el contexto enriquecido está disponible desde el primer <code>alEntrarEscena</code>.</p>
+  </div>
+
+  <h3>Con PixiJS + Spine</h3>
+  <div class="card">
+    <div class="card-title">1️⃣ pixi.js@8 + spine-pixi-v8 + howler@2</div>
+    <p>Dependencias del driver Spine. Desde CDN o bundler.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">2️⃣ INKA-driver-spine.js</div>
+    <p>Registra <code>global.INKA_DriverSpine</code>.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">3️⃣ → 5️⃣ Mismo que Animate</div>
+    <p>Núcleo → telemetría → IA. El núcleo detecta el driver por <code>opts.driver: "spine"</code>.</p>
+  </div>
+
+  <div class="issue error">
+    <div class="issue-icon">🚫</div>
+    <div class="issue-body">
+      <strong>No cargar inka-opciones.js</strong>
+      <span>El módulo de opciones antiguo está completamente reemplazado por el sistema de diálogos nativo del núcleo. Cargarlo causará conflictos de definición.</span>
+    </div>
+  </div>
+
+  <a class="back-top" href="#top">↑ Volver al inicio</a>
+</section>
+
+</main>
+
+<script>
+// ── TOC ──────────────────────────────────────────────
+const toc = document.getElementById('toc');
+const overlay = document.getElementById('overlay');
+const menuBtn = document.getElementById('menuBtn');
+const closeToc = document.getElementById('closeToc');
+const search = document.getElementById('search');
+
+function openToc() { toc.classList.add('open'); overlay.classList.add('on'); }
+function closeTocFn() { toc.classList.remove('open'); overlay.classList.remove('on'); }
+
+menuBtn.addEventListener('click', openToc);
+closeToc.addEventListener('click', closeTocFn);
+overlay.addEventListener('click', closeTocFn);
+
+// Close TOC on link click (mobile)
+toc.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    if (window.innerWidth < 768) closeTocFn();
+  });
+});
+
+// ── SEARCH ───────────────────────────────────────────
+search.addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  toc.querySelectorAll('.toc-link').forEach(a => {
+    const match = !q || a.textContent.toLowerCase().includes(q);
+    a.style.display = match ? '' : 'none';
+  });
+  toc.querySelectorAll('.toc-group').forEach(g => {
+    // Show group if any sibling links visible
+    let next = g.nextElementSibling;
+    let any = false;
+    while (next && !next.classList.contains('toc-group')) {
+      if (next.style.display !== 'none') any = true;
+      next = next.nextElementSibling;
+    }
+    g.style.display = any ? '' : 'none';
+  });
+});
+
+// ── ACTIVE LINK ──────────────────────────────────────
+const sections = document.querySelectorAll('section[id], div[id="overview"], div[id="arquitectura"]');
+const links = toc.querySelectorAll('.toc-link');
+
+function getScrollSections() {
+  return Array.from(document.querySelectorAll('[id]')).filter(el => {
+    return toc.querySelector('a[href="#' + el.id + '"]');
+  });
+}
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      links.forEach(l => {
+        l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-60px 0px -60% 0px', threshold: 0 });
+
+document.querySelectorAll('section[id], h3[id]').forEach(el => io.observe(el));
+
+// ── SERVICE WORKER ────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
